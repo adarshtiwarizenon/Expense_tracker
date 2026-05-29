@@ -1,0 +1,193 @@
+<app-page-toolbar title="Analytics">
+  <p-button
+    icon="pi pi-refresh"
+    [text]="true"
+    [rounded]="true"
+    (onClick)="loadAll()"
+    pTooltip="Refresh"
+  ></p-button>
+</app-page-toolbar>
+
+<!-- METRICS CARDS -->
+<ng-container *ngIf="{ metrics: metrics$ | async } as m">
+<div class="grid mb-4">
+  <div class="col-12 md:col-6 lg:col-3">
+    <p-card styleClass="metric-card">
+      <ng-container *ngIf="loading; else metricSavings">
+        <p-skeleton height="60px"></p-skeleton>
+      </ng-container>
+      <ng-template #metricSavings>
+        <div class="metric-label">Savings Ratio</div>
+        <div class="metric-value text-primary">
+          {{ m.metrics?.savingsRatio || 0 }}%
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12 md:col-6 lg:col-3">
+    <p-card styleClass="metric-card">
+      <ng-container *ngIf="loading; else metricTop">
+        <p-skeleton height="60px"></p-skeleton>
+      </ng-container>
+      <ng-template #metricTop>
+        <div class="metric-label">Top Spending Category</div>
+        <div class="metric-value">{{ m.metrics?.highestSpendingCategory || '-' }}</div>
+        <div class="metric-sub">
+          {{ m.metrics?.highestSpendingAmount | inr }}
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12 md:col-6 lg:col-3">
+    <p-card styleClass="metric-card">
+      <ng-container *ngIf="loading; else metricCurrent">
+        <p-skeleton height="60px"></p-skeleton>
+      </ng-container>
+      <ng-template #metricCurrent>
+        <div class="metric-label">This Month Expenses</div>
+        <div class="metric-value">
+          {{ m.metrics?.currentMonthExpenses | inr }}
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12 md:col-6 lg:col-3">
+    <p-card styleClass="metric-card">
+      <ng-container *ngIf="loading; else metricMom">
+        <p-skeleton height="60px"></p-skeleton>
+      </ng-container>
+      <ng-template #metricMom>
+        <div class="metric-label">Month over Month</div>
+        <div class="metric-value" [ngClass]="getMomChangeColor(m.metrics)">
+          {{ m.metrics?.monthOverMonthChange || 0 }}%
+        </div>
+        <div class="metric-sub">vs previous month</div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>
+</ng-container>
+
+<!-- CHARTS GRID -->
+<div class="grid">
+  <!-- PIE CHART: Category Distribution -->
+  <div class="col-12 lg:col-6">
+    <p-panel header="Category Distribution" [toggleable]="true">
+      <div class="mb-3 flex align-items-center gap-2">
+        <label class="font-medium">Month:</label>
+        <p-datepicker
+          [(ngModel)]="selectedMonth"
+          view="month"
+          dateFormat="MM yy"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          appendTo="body"
+          (onSelect)="onMonthChange()"
+        ></p-datepicker>
+      </div>
+
+      <ng-container *ngIf="categoryDistribution$ | async as categoryDistribution">
+        <div *ngIf="categoryDistribution.length === 0" class="text-center p-3">
+          <p-message
+            severity="info"
+            text="No expenses recorded for this month"
+            styleClass="w-full"
+          ></p-message>
+        </div>
+
+        <div *ngIf="categoryDistribution.length > 0" style="height: 350px">
+          <p-chart
+            type="pie"
+            [data]="pieChartData"
+            [options]="pieChartOptions"
+          ></p-chart>
+        </div>
+      </ng-container>
+    </p-panel>
+  </div>
+
+  <!-- BAR CHART: Monthly Comparison -->
+  <div class="col-12 lg:col-6">
+    <p-panel header="Monthly Comparison (Last 6 Months)" [toggleable]="true">
+      <ng-container *ngIf="monthlyComparison$ | async as monthlyComparison">
+        <div *ngIf="monthlyComparison.length === 0" class="text-center p-3">
+          <p-message
+            severity="info"
+            text="Not enough data for monthly comparison"
+            styleClass="w-full"
+          ></p-message>
+        </div>
+
+        <div *ngIf="monthlyComparison.length > 0" style="height: 350px">
+          <p-chart
+            type="bar"
+            [data]="barChartData"
+            [options]="barChartOptions"
+          ></p-chart>
+        </div>
+      </ng-container>
+    </p-panel>
+  </div>
+
+  <!-- LINE CHART: Expense Trend -->
+  <div class="col-12 lg:col-7">
+    <p-panel header="Expense Trend" [toggleable]="true">
+      <div class="mb-3 flex align-items-center gap-2">
+        <label class="font-medium">Date Range:</label>
+        <p-datepicker
+          [(ngModel)]="trendDateRange"
+          selectionMode="range"
+          [readonlyInput]="true"
+          placeholder="Last 30 days"
+          dateFormat="dd-mm-yy"
+          [showIcon]="true"
+          (onSelect)="onTrendDateChange()"
+        ></p-datepicker>
+      </div>
+
+      <ng-container *ngIf="expenseTrend$ | async as expenseTrend">
+        <div *ngIf="expenseTrend.length === 0" class="text-center p-3">
+          <p-message
+            severity="info"
+            text="No expense data for selected period"
+            styleClass="w-full"
+          ></p-message>
+        </div>
+
+        <div *ngIf="expenseTrend.length > 0" style="height: 350px">
+          <p-chart
+            type="line"
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+          ></p-chart>
+        </div>
+      </ng-container>
+    </p-panel>
+  </div>
+
+  <!-- INSIGHTS PANEL -->
+  <div class="col-12 lg:col-5">
+    <p-panel header=" Smart Insights" [toggleable]="true">
+      <ng-container *ngIf="insights$ | async as insights">
+        <div *ngIf="insights.length === 0" class="text-center p-3">
+          <p-message
+            severity="info"
+            text="No insights available yet. Add more transactions!"
+            styleClass="w-full"
+          ></p-message>
+        </div>
+
+        <div *ngFor="let insight of insights; trackBy: trackByInsight" class="insight-item">
+          <p-message
+            [severity]="getInsightSeverity(insight.type)"
+            [text]="insight.message"
+            styleClass="w-full"
+          ></p-message>
+        </div>
+      </ng-container>
+    </p-panel>
+  </div>
+</div>

@@ -1,0 +1,159 @@
+<app-page-toolbar title="Reports"></app-page-toolbar>
+
+<div class="grid">
+  <!-- DATE RANGE FILTER -->
+  <div class="col-12">
+    <p-panel header="Filter Date Range (Optional)" [toggleable]="true">
+      <p-message
+        severity="info"
+        text="Leave the date range empty to export all transactions. Select a range to filter."
+        styleClass="w-full mb-3"
+      ></p-message>
+
+      <div class="flex flex-column md:flex-row align-items-start md:align-items-center gap-3">
+        <div class="flex-1">
+          <label class="block mb-2 font-medium">Date Range</label>
+          <p-datepicker
+            [(ngModel)]="dateRange"
+            selectionMode="range"
+            [readonlyInput]="true"
+            placeholder="Select start and end date"
+            dateFormat="dd-mm-yy"
+            [showIcon]="true"
+            [maxDate]="today"
+            styleClass="w-full md:w-20rem"
+          ></p-datepicker>
+        </div>
+        <div *ngIf="hasDateRange()" class="flex align-items-end">
+          <p-button
+            label="Clear Filter"
+            icon="pi pi-times"
+            [text]="true"
+            (onClick)="clearFilter()"
+          ></p-button>
+        </div>
+      </div>
+
+      <div *ngIf="hasDateRange()" class="mt-3">
+        <p-message
+          severity="success"
+          [text]="'Exporting from ' + (dateRange?.[0] | date: 'dd MMM yyyy') + ' to ' + (dateRange?.[1] | date: 'dd MMM yyyy')"
+          styleClass="w-full"
+        ></p-message>
+      </div>
+    </p-panel>
+  </div>
+
+  <!-- CSV EXPORT CARD -->
+  <div class="col-12 md:col-6">
+    <p-card styleClass="export-card">
+      <div class="export-icon csv-icon">
+        <i class="pi pi-file"></i>
+      </div>
+      <h3>Export as CSV</h3>
+      <p class="export-description">
+        Download your transactions in CSV format for use in Excel, Google Sheets, or any
+        spreadsheet application.
+      </p>
+
+      <ul class="feature-list">
+        <li><i class="pi pi-check"></i> Lightweight & fast</li>
+        <li><i class="pi pi-check"></i> Open in any spreadsheet tool</li>
+        <li><i class="pi pi-check"></i> Easy to manipulate data</li>
+      </ul>
+
+      <p-divider></p-divider>
+
+      <p-button
+        label="Download CSV"
+        icon="pi pi-download"
+        styleClass="w-full"
+        (onClick)="exportCSV()"
+        [loading]="exporting && exportingFormat === 'csv'"
+        [disabled]="exporting"
+      ></p-button>
+    </p-card>
+  </div>
+
+  <!-- PDF EXPORT CARD -->
+  <div class="col-12 md:col-6">
+    <p-card styleClass="export-card">
+      <div class="export-icon pdf-icon">
+        <i class="pi pi-file-pdf"></i>
+      </div>
+      <h3>Export as PDF</h3>
+      <p class="export-description">
+        Download a beautifully formatted PDF report with summary statistics and a detailed
+        transaction table.
+      </p>
+
+      <ul class="feature-list">
+        <li><i class="pi pi-check"></i> Professional layout</li>
+        <li><i class="pi pi-check"></i> Summary section included</li>
+        <li><i class="pi pi-check"></i> Print-ready format</li>
+      </ul>
+
+      <p-divider></p-divider>
+
+      <p-button
+        label="Download PDF"
+        icon="pi pi-download"
+        styleClass="w-full"
+        severity="danger"
+        (onClick)="exportPDF()"
+        [loading]="exporting && exportingFormat === 'pdf'"
+        [disabled]="exporting"
+      ></p-button>
+    </p-card>
+  </div>
+
+  <!-- INFO PANEL -->
+  <div class="col-12">
+    <p-panel header="What's Included in Reports?" [toggleable]="true">
+      <div class="grid">
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-calendar info-icon"></i>
+            <h4>Transaction Date</h4>
+            <p>The date each transaction occurred</p>
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-tag info-icon"></i>
+            <h4>Category & Type</h4>
+            <p>Whether it's Income or Expense, and which category</p>
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-wallet info-icon"></i>
+            <h4>Amount & Method</h4>
+            <p>Transaction amount and payment method used</p>
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-pencil info-icon"></i>
+            <h4>Description</h4>
+            <p>Any notes you added to the transaction</p>
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-chart-line info-icon"></i>
+            <h4>Summary (PDF only)</h4>
+            <p>Total income, expenses, and net balance overview</p>
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="info-block">
+            <i class="pi pi-filter info-icon"></i>
+            <h4>Filtered Data</h4>
+            <p>Only transactions within selected date range</p>
+          </div>
+        </div>
+      </div>
+    </p-panel>
+  </div>
+</div>

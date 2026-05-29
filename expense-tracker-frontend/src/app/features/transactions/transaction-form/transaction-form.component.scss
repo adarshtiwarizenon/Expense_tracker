@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+
+  label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+  }
+}
+
+::ng-deep .p-dialog {
+  .p-dialog-header {
+    background: var(--surface-card);
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--surface-border);
+
+    .p-dialog-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+}
+
+// Radio buttons inline
+.flex.gap-4 {
+  label {
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+}
+
+// Input width fixes
+::ng-deep {
+  .p-inputnumber,
+  .p-calendar,
+  .p-dropdown {
+    width: 100%;
+
+    input {
+      width: 100%;
+    }
+  }
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}

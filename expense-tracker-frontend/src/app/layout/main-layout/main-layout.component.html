@@ -1,0 +1,77 @@
+<div class="layout-wrapper">
+  <!-- GLOBAL LOADING BAR -->
+  <p-progressBar
+    *ngIf="loading$ | async"
+    mode="indeterminate"
+    [style]="{ height: '3px' }"
+    styleClass="global-progress-bar"
+  ></p-progressBar>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="flex align-items-center gap-2">
+      <p-button
+        icon="pi pi-bars"for 
+        [text]="true"
+        [rounded]="true"
+        (onClick)="toggleSidebar()"
+        pTooltip="Toggle sidebar"
+        tooltipPosition="bottom"
+      ></p-button>
+      <h2 class="m-0">EXPENSE TRACKER</h2>
+    </div>
+
+  <div class="flex align-items-center gap-3">
+    <p-button
+      [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+      [text]="true"
+      [rounded]="true"
+      (onClick)="toggleDarkMode()"
+      [pTooltip]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+      tooltipPosition="bottom"
+    ></p-button>
+
+  <div class="user-profile-section">
+      <p-menu
+        #userMenuRef
+        [model]="userMenu"
+        [popup]="true"
+        appendTo="body"
+      ></p-menu>
+      <p-avatar
+        icon="pi pi-user"
+        shape="circle"
+        (click)="userMenuRef.toggle($event)"
+        pTooltip="User menu"
+        tooltipPosition="bottom"
+        styleClass="cursor-pointer"
+      ></p-avatar>
+      <span class="user-name" *ngIf="currentUser$ | async as currentUser">
+        {{ currentUser.fullName }}
+      </span>
+    </div>
+  </div>
+  </div>
+
+  <!-- BREADCRUMB -->
+  <ng-container *ngIf="breadcrumbItems$ | async as breadcrumbItems">
+    <div class="breadcrumb-bar" *ngIf="breadcrumbItems.length > 0">
+      <p-breadcrumb
+        [model]="breadcrumbItems"
+        [home]="homeBreadcrumb"
+      ></p-breadcrumb>
+    </div>
+  </ng-container>
+
+  <div class="layout-content">
+    <!-- SIDEBAR -->
+    <div class="sidebar" [class.sidebar-hidden]="!sidebarVisible">
+      <p-panelMenu [model]="menuItems" [multiple]="false"></p-panelMenu>
+    </div>
+
+    <!-- MAIN -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

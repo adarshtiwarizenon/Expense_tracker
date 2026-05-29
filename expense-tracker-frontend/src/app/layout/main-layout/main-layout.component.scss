@@ -1,0 +1,83 @@
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.global-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 70px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--surface-border);
+
+  h2 {
+    font-size: 1.2rem;
+    color: var(--text-color);
+  }
+
+  .user-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .user-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-color);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+}
+
+.breadcrumb-bar {
+  padding: 0.5rem 1.5rem;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.layout-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 250px;
+  background: var(--surface-card);
+  border-right: 1px solid var(--surface-border);
+  padding: 1rem;
+  overflow-y: auto;
+  transition: margin-left 0.3s;
+
+  &.sidebar-hidden {
+    margin-left: -250px;
+  }
+}
+
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: var(--surface-ground);
+}

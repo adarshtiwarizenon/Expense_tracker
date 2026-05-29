@@ -1,0 +1,97 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+/build
+*.tsbuildinfo
+
+# Node
+/node_modules
+npm-debug.log*
+yarn-error.log
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# Angular cache
+/.angular/cache
+.angular/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
+.vscode-test/
+
+# Environment variables / secrets
+# (Keep src/environments/environment*.ts tracked — those are Angular's compile-time
+#  environment files. Block any .env-style files that contain real secrets.)
+.env
+.env.*
+!.env.example
+*.local
+secrets/
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Testing / coverage
+/coverage
+/.nyc_output
+testem.log
+*.lcov
+__screenshots__/
+/cypress/videos/
+/cypress/screenshots/
+/playwright-report/
+/test-results/
+
+# Build / caching artifacts
+.sass-cache/
+/connect.lock
+/libpeerconnection.log
+/typings
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+logs/
+*.log
+
+# Optional npm/yarn/pnpm metadata
+.npm
+.yarn/
+.yarn-integrity

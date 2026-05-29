@@ -1,0 +1,138 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [header]="editingRecurring ? 'Edit Recurring Transaction' : 'New Recurring Transaction'"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <p-message
+      *ngIf="serverError"
+      severity="error"
+      [text]="serverError"
+      styleClass="w-full mb-3"
+    ></p-message>
+
+    <div class="field">
+      <label>Type</label>
+      <div class="flex gap-4 mt-2">
+        <div class="flex align-items-center gap-2">
+          <p-radioButton
+            formControlName="type"
+            value="EXPENSE"
+            inputId="expense"
+            (onClick)="onTypeChange()"
+          ></p-radioButton>
+          <label for="expense" class="mb-0">Expense</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-radioButton
+            formControlName="type"
+            value="INCOME"
+            inputId="income"
+            (onClick)="onTypeChange()"
+          ></p-radioButton>
+          <label for="income" class="mb-0">Income</label>
+        </div>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="amount">Amount *</label>
+          <p-inputNumber
+            formControlName="amount"
+            mode="currency"
+            currency="INR"
+            locale="en-IN"
+            placeholder="Enter amount"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          ></p-inputNumber>
+          <p-message
+            *ngIf="isInvalid('amount')"
+            severity="error"
+            text="Amount must be greater than 0"
+            styleClass="mt-1"
+          ></p-message>
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="frequency">Frequency *</label>
+          <p-select
+            formControlName="frequency"
+            [options]="frequencyOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            appendTo="body"
+          ></p-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="categoryId">Category *</label>
+      <p-select
+        formControlName="categoryId"
+        [options]="filteredCategories"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select a category"
+        styleClass="w-full"
+        appendTo="body"
+      ></p-select>
+      <p-message
+        *ngIf="isInvalid('categoryId')"
+        severity="error"
+        text="Category is required"
+        styleClass="mt-1"
+      ></p-message>
+    </div>
+
+    <div class="field">
+      <label for="nextExecution">Next Execution Date *</label>
+      <p-datepicker
+        formControlName="nextExecution"
+        dateFormat="dd-mm-yy"
+        [showIcon]="true"
+        [minDate]="today"
+        styleClass="w-full"
+        appendTo="body"
+      ></p-datepicker>
+    </div>
+
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea
+        pTextarea
+        formControlName="description"
+        placeholder="Optional notes..."
+        class="w-full"
+        rows="3"
+        [autoResize]="true"
+      ></textarea>
+    </div>
+
+    <p-divider></p-divider>
+
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        label="Cancel"
+        icon="pi pi-times"
+        [text]="true"
+        (onClick)="onCancel()"
+      ></p-button>
+      <p-button
+        type="submit"
+        label="Save"
+        icon="pi pi-check"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog>

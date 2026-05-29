@@ -1,0 +1,141 @@
+<app-page-toolbar title="Budgets">
+  <p-button
+    label="Add Budget"
+    icon="pi pi-plus"
+    (onClick)="openCreateDialog()"
+  ></p-button>
+</app-page-toolbar>
+
+<!-- MONTH FILTER -->
+<p-panel header="Month Filter" [toggleable]="true" styleClass="mb-3">
+  <div class="flex align-items-center gap-3">
+    <label class="font-medium">Select Month:</label>
+    <p-datepicker
+      [(ngModel)]="filterMonth"
+      view="month"
+      dateFormat="MM yy"
+      [showIcon]="true"
+      [readonlyInput]="true"
+      appendTo="body"
+      (onSelect)="onMonthChange()"
+    ></p-datepicker>
+  </div>
+</p-panel>
+
+<!-- UTILIZATION OVERVIEW -->
+<p-panel header="Budget Utilization" [toggleable]="true" styleClass="mb-3">
+  <ng-container *ngIf="utilization$ | async as utilization">
+    <div *ngIf="utilization.length === 0" class="text-center p-3">
+      <p-message
+        severity="info"
+        text="No budgets set for this month. Add one to start tracking!"
+        styleClass="w-full"
+      ></p-message>
+    </div>
+
+    <div *ngFor="let item of utilization; trackBy: trackByBudgetId" class="utilization-item">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="category-name">{{ item.categoryName }}</span>
+          <p-tag
+            [value]="item.status"
+            [severity]="item.status | severity: 'status'"
+            styleClass="ml-2"
+          ></p-tag>
+        </div>
+        <span class="amount-text">
+          {{ item.spentAmount | inr }}
+          / {{ item.budgetAmount | inr }}
+        </span>
+      </div>
+      <p-progressBar
+        [value]="item.utilizationPercentage"
+        [style]="{ height: '12px' }"
+      ></p-progressBar>
+      <div class="flex justify-content-between mt-1 text-sm">
+        <span class="text-color-secondary">
+          Remaining: {{ item.remainingAmount | inr }}
+        </span>
+        <span class="font-bold">{{ item.utilizationPercentage }}%</span>
+      </div>
+    </div>
+  </ng-container>
+</p-panel>
+
+<!-- ALL BUDGETS TABLE -->
+<p-panel header="All Budgets" [toggleable]="true">
+  <p-table
+    [value]="(budgets$ | async) || []"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="defaultPageSize"
+    [rowsPerPageOptions]="pageSizeOptions"
+    styleClass="p-datatable-sm"
+    dataKey="id"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Category</th>
+        <th>Month</th>
+        <th>Budget Amount</th>
+        <th style="width: 130px">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-budget>
+      <tr>
+        <td>{{ budget.categoryName }}</td>
+        <td>{{ budget.month }}</td>
+        <td>{{ budget.amount | inr }}</td>
+        <td>
+          <p-button
+            icon="pi pi-pencil"
+            [text]="true"
+            [rounded]="true"
+            (onClick)="openEditDialog(budget)"
+            pTooltip="Edit"
+            tooltipPosition="top"
+          ></p-button>
+          <p-button
+            icon="pi pi-trash"
+            [text]="true"
+            [rounded]="true"
+            severity="danger"
+            appConfirm
+            [confirmMessage]="'Delete budget for &quot;' + budget.categoryName + '&quot; (' + budget.month + ')?'"
+            confirmHeader="Confirm Delete"
+            (confirmed)="deleteOptimistic(budget)"
+            pTooltip="Delete"
+            tooltipPosition="top"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="loadingbody">
+      <tr *ngFor="let i of [1, 2, 3]">
+        <td><p-skeleton></p-skeleton></td>
+        <td><p-skeleton></p-skeleton></td>
+        <td><p-skeleton></p-skeleton></td>
+        <td><p-skeleton></p-skeleton></td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4" class="text-center p-3">
+          <p-message
+            severity="info"
+            text="No budgets created yet"
+            styleClass="w-full"
+          ></p-message>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-panel>
+
+<app-budget-form
+  [(visible)]="dialogVisible"
+  [editingBudget]="editingBudget"
+  [categories]="categories"
+  [serverError]="budgetServerError"
+  (save)="onSave($event)"
+></app-budget-form>

@@ -9,11 +9,11 @@ export class LoadingService {
 
   show(): void {
     this.pending++;
-    if (this.pending === 1) this.loadingSubject.next(true);
+    if (this.pending === 1) setTimeout(() => this.loadingSubject.next(true));
   }
 
   hide(): void {
     if (this.pending > 0) this.pending--;
-    if (this.pending === 0) this.loadingSubject.next(false);
+    if (this.pending === 0) setTimeout(() => this.loadingSubject.next(false));
   }
 }

@@ -13,8 +13,8 @@ export class AuthService {
   private tokenService = inject(TokenService);
   private router = inject(Router);
 
-  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(this.tokenService.getUser());
-  currentUser$ = this.currentUserSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(this.tokenService.getUser()); // initialize with user from token service if available
+  currentUser$ = this.currentUserSubject.asObservable();  //create a read only observable for components to subscribe to
 
   register(request: RegisterRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http

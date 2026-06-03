@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+  noWhitespace,
+  passwordMatch,
+  strongPassword,
+} from '../../../core/validators/custom-validators';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -45,22 +44,18 @@ export class SignupComponent {
   loading = false;
   serverError = '';
 
+  // Cross-field validator (passwordMatchValidator) is applied at the group level, not field level,
+  // because it needs to compare two sibling controls
   signupForm = this.fb.group(
     {
-      fullName: ['', [Validators.required, Validators.minLength(2)]],
+      fullName: ['', [Validators.required, Validators.minLength(2), noWhitespace]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', [Validators.required, Validators.minLength(8), strongPassword]],
       confirmPassword: ['', Validators.required],
-      acceptTerms: [false, Validators.requiredTrue],
+      acceptTerms: [false, Validators.requiredTrue], // must be checked to submit
     },
-    { validators: this.passwordMatchValidator }
+    { validators: passwordMatch }
   );
-
-  passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
-    const password = group.get('password')?.value;
-    const confirm = group.get('confirmPassword')?.value;
-    return password === confirm ? null : { passwordMismatch: true };
-  }
 
   onSubmit(): void {
     if (this.signupForm.invalid) {
@@ -71,10 +66,12 @@ export class SignupComponent {
     this.serverError = '';
     this.loading = true;
 
+    // acceptTerms is a UI-only field — strip it before sending to backend
     const { acceptTerms, ...registerPayload } = this.signupForm.value;
 
     this.authService.register(registerPayload as any).subscribe({
       next: () => {
+        // Register auto-logs the user in (backend returns a token) — just redirect
         this.notification.success('Account created successfully!');
         this.router.navigate(['/transactions']);
       },
@@ -86,11 +83,14 @@ export class SignupComponent {
     });
   }
 
+  // Helper used in the template to show red validation text under a field
   isInvalid(field: string): boolean {
     const control = this.signupForm.get(field);
     return !!(control && control.invalid && control.touched);
   }
 
+  // Used in template to show "Passwords do not match" under confirmPassword field
+  // Only shown after the user has touched the confirm field
   get passwordMismatch(): boolean {
     return (
       !!this.signupForm.errors?.['passwordMismatch'] &&

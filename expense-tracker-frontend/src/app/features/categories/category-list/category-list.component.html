@@ -115,6 +115,12 @@
         text="Name must be at least 2 characters"
         styleClass="w-full mt-1"
       />
+      <p-message
+        *ngIf="isInvalid('name') && form.get('name')?.errors?.['whitespace']"
+        severity="error"
+        text="Name cannot be blank"
+        styleClass="w-full mt-1"
+      />
     </div>
 
     <div class="field mt-3">

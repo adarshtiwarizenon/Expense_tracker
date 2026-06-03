@@ -144,7 +144,10 @@
           placeholder="Last 30 days"
           dateFormat="dd-mm-yy"
           [showIcon]="true"
+          [showClear]="true"
+          [maxDate]="trendMaxDate!"
           (onSelect)="onTrendDateChange()"
+          (onClear)="onTrendDateClear()"
         ></p-datepicker>
       </div>
 

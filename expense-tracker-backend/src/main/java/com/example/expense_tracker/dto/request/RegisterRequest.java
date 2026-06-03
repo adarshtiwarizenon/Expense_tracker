@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+// Incoming request body for POST /api/auth/register
+// @Valid on the controller method triggers these annotations automatically
 @Data
 public class RegisterRequest {
 
@@ -20,6 +22,7 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    // confirmPassword is checked manually in AuthServiceImpl — not stored in the database
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
 }

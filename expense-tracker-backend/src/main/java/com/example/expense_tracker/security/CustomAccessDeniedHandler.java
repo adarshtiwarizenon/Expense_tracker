@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+// Triggered when an authenticated user tries to access a resource they don't have permission for (HTTP 403).
+// Different from CustomAuthenticationEntryPoint (401 = not logged in vs 403 = logged in but not allowed).
+// In this app all users have equal access, so 403 would only occur if role-based restrictions were added later.
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -22,16 +25,18 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     public CustomAccessDeniedHandler() {
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new JavaTimeModule());
-        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ← KEY FIX
+        // Without this, LocalDateTime fields serialize as timestamp arrays instead of ISO strings
+        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    // Called by Spring Security when a logged-in user is denied access (insufficient permissions)
     @Override
     public void handle(
             HttpServletRequest request,
             HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException {
 
-        response.setStatus(HttpStatus.FORBIDDEN.value());
+        response.setStatus(HttpStatus.FORBIDDEN.value());  // HTTP 403
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         ErrorResponse errorResponse = ErrorResponse.builder()

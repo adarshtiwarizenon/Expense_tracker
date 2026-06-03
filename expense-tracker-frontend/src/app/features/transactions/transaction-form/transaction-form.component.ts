@@ -9,6 +9,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { noFutureDate } from '../../../core/validators/custom-validators';
 import { ButtonModule } from 'primeng/button';
 import { DatePicker } from 'primeng/datepicker';
 import { Message } from 'primeng/message';
@@ -71,7 +72,7 @@ export class TransactionFormComponent implements OnChanges {
   form = this.fb.group({
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     type: ['EXPENSE' as TransactionType, Validators.required],
-    date: [new Date(), Validators.required],
+    date: [new Date(), [Validators.required, noFutureDate]],
     description: [''],
     paymentMethod: [''],
     categoryId: [null as number | null, Validators.required],

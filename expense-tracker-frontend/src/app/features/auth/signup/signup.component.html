@@ -24,8 +24,11 @@
           placeholder="John Doe"
           class="w-full"
         />
-        <small class="p-error" *ngIf="isInvalid('fullName')">
-          Full name is required
+        <small class="p-error" *ngIf="isInvalid('fullName') && signupForm.get('fullName')?.errors?.['whitespace']">
+          Full name cannot be blank
+        </small>
+        <small class="p-error" *ngIf="isInvalid('fullName') && !signupForm.get('fullName')?.errors?.['whitespace']">
+          Full name is required (min 2 characters)
         </small>
       </div>
 
@@ -53,8 +56,11 @@
           styleClass="w-full"
           inputStyleClass="w-full"
         ></p-password>
-        <small class="p-error" *ngIf="isInvalid('password')">
+        <small class="p-error" *ngIf="isInvalid('password') && signupForm.get('password')?.errors?.['minlength']">
           Password must be at least 8 characters
+        </small>
+        <small class="p-error" *ngIf="isInvalid('password') && signupForm.get('password')?.errors?.['weakPassword']">
+          Password must include an uppercase letter, a number, and a special character
         </small>
       </div>
 

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { noWhitespace } from '../../../core/validators/custom-validators';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { BehaviorSubject, forkJoin } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -87,7 +88,7 @@ export class CategoryListComponent implements OnInit {
   ];
 
   form = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
+    name: ['', [Validators.required, Validators.minLength(2), noWhitespace]],
     type: ['EXPENSE' as CategoryType, Validators.required],
   });
 

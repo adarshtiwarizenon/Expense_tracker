@@ -1,11 +1,13 @@
 import { environment } from '../../../environments/environment';
 
+// Base URL comes from environment.ts (e.g. http://localhost:8080/api)
+// All endpoints are defined here so changing the base URL or path is a single-place edit
 const BASE = environment.apiUrl;
 
 export const API_ENDPOINTS = {
   AUTH: {
-    REGISTER: `${BASE}/auth/register`,
-    LOGIN: `${BASE}/auth/login`,
+    REGISTER: `${BASE}/auth/register`, // POST — creates new user account
+    LOGIN: `${BASE}/auth/login`,       // POST — returns JWT token on success
   },
   CATEGORIES: {
     BASE: `${BASE}/categories`,

@@ -29,13 +29,14 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
-    private final CategoryService categoryService;   // ← NEW
+    private final CategoryService categoryService;
 
     @Override
-    @Transactional
+    @Transactional  // wraps user save + category seeding in one transaction — rolls back both if either fails
     public AuthResponse register(RegisterRequest request) {
         log.info("Registering new user with email: {}", request.getEmail());
 
+        // Backend double-checks even though the frontend also validates — never trust client-only validation
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new BadRequestException("Password and confirm password do not match");
         }
@@ -47,15 +48,16 @@ public class AuthServiceImpl implements AuthService {
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(request.getPassword())) // BCrypt hash — never store plain text
                 .build();
 
         User savedUser = userRepository.save(user);
         log.info("User registered successfully with id: {}", savedUser.getId());
 
-        // Seed default categories for new user
-        categoryService.seedDefaultCategories(savedUser);   // ← NEW
+        // Create default categories (Food, Transport, etc.) so the user doesn't start with an empty app
+        categoryService.seedDefaultCategories(savedUser);
 
+        // Generate JWT immediately so the user is logged in right after registering
         UserPrincipal userPrincipal = UserPrincipal.create(savedUser);
         String token = jwtUtil.generateToken(userPrincipal);
 
@@ -71,6 +73,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
 
+        // authenticationManager delegates to DaoAuthenticationProvider:
+        // 1. Calls CustomUserDetailsService.loadUserByUsername(email) to fetch the user
+        // 2. BCrypt-compares the submitted password with the stored hash
+        // 3. Throws BadCredentialsException if wrong — caught by GlobalExceptionHandler
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -78,6 +84,7 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
+        // Store authentication in SecurityContext for the duration of this request
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 

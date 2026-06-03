@@ -61,6 +61,7 @@ export class AnalyticsHomeComponent implements OnInit {
   // Filters
   selectedMonth: Date = new Date();
   trendDateRange: Date[] | null = null;
+  trendMaxDate: Date | null = null;
 
   private categoryRefresh$ = new BehaviorSubject<void>(undefined);
   private comparisonRefresh$ = new BehaviorSubject<void>(undefined);
@@ -197,12 +198,26 @@ export class AnalyticsHomeComponent implements OnInit {
     };
   }
 
+  onTrendDateClear(): void {
+    this.trendDateRange = null;
+    this.trendMaxDate = null;
+    this.trendRefresh$.next();
+  }
+
   onMonthChange(): void {
     this.categoryRefresh$.next();
   }
 
   onTrendDateChange(): void {
-    if (this.trendDateRange?.[0] && this.trendDateRange?.[1]) {
+    const start = this.trendDateRange?.[0];
+    const end = this.trendDateRange?.[1];
+
+    if (start && !end) {
+      const max = new Date(start);
+      max.setDate(max.getDate() + 30);
+      this.trendMaxDate = max;
+    } else if (start && end) {
+      this.trendMaxDate = null;
       this.trendRefresh$.next();
     }
   }

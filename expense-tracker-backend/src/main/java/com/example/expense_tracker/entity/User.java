@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// JPA entity mapped to the "users" table
+// @EntityListeners enables auto-population of createdAt/updatedAt via Spring Data Auditing
 @Entity
 @Table(name = "users")
 @Getter
@@ -28,19 +30,20 @@ public class User {
     private String fullName;
 
     @Column(unique = true, nullable = false, length = 100)
-    private String email;
+    private String email; // used as the username for Spring Security
 
     @Column(nullable = false)
-    private String password;
+    private String password; // stored as a BCrypt hash — never plain text
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false) // updatable=false prevents accidental overwrites
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // cascade=ALL + orphanRemoval: deleting a user also deletes all their categories and transactions
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Category> categories = new ArrayList<>();

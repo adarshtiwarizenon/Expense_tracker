@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  linkedSignal,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -12,7 +20,6 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { BehaviorSubject, Observable, Subject, switchMap, tap } from 'rxjs';
 import { CurrencyInrPipe } from '../../../core/shared/pipes/currency-inr.pipe';
 import { SeverityPipe } from '../../../core/shared/pipes/severity.pipe';
 import { PageToolbarComponent } from '../../../core/shared/components/page-toolbar/page-toolbar.component';
@@ -67,14 +74,9 @@ export class TransactionListComponent implements OnInit {
   private reportsService = inject(ReportsService);
   private fileDownloadService = inject(FileDownloadService);
 
-  private categoriesSubject = new BehaviorSubject<Category[]>([]);
-  categories$ = this.categoriesSubject.asObservable();
-
-  private pageSubject = new BehaviorSubject<PageResponse<Transaction> | null>(null);
-  page$ = this.pageSubject.asObservable();
-
-  totalRecords = 0;
-  loading = false;
+  // Category list for the filter dropdown.
+  private categoriesState = signal<Category[]>([]);
+  categories = this.categoriesState.asReadonly();
 
   defaultPageSize = environment.defaultPageSize;
   pageSizeOptions = environment.pageSizeOptions;
@@ -85,11 +87,34 @@ export class TransactionListComponent implements OnInit {
 
   today = new Date();
 
+  // Filters — plain fields so [(ngModel)] continues to work.
   filterType: TransactionType | null = null;
   filterCategoryIds: number[] = [];
   filterDateRange: Date[] | null = null;
 
-  private refresh$ = new Subject<TableLazyLoadEvent | null>();
+  // Drives the resource: pagination event from the table, plus a manual tick for explicit reloads.
+  private lazyLoadEvent = signal<TableLazyLoadEvent | undefined>(undefined);
+  private refreshTick = signal(0);
+
+  // Resource — refetches whenever lazyLoadEvent or refreshTick changes.
+  // Returns undefined until the table fires its first onLazyLoad, preventing a double request on init.
+  private pageResource = rxResource({
+    params: () => {
+      const event = this.lazyLoadEvent();
+      if (event === undefined) return undefined;
+      return { event, tick: this.refreshTick() };
+    },
+    stream: ({ params }) =>
+      this.transactionService.getAll(this.buildFilters(params.event ?? undefined)),
+  });
+
+  // linkedSignal lets us override the resource value locally (for optimistic delete)
+  // while still snapping back to fresh data when the resource refetches.
+  page = linkedSignal<PageResponse<Transaction> | null>(
+    () => this.pageResource.value() ?? null
+  );
+  totalRecords = computed(() => this.page()?.totalElements ?? 0);
+  loading = computed(() => this.pageResource.isLoading());
 
   typeOptions = [
     { label: 'All', value: null },
@@ -116,32 +141,19 @@ export class TransactionListComponent implements OnInit {
     },
   ];
 
-  // Drives all backend calls; bound directly into template via async pipe
-  pageStream$: Observable<PageResponse<Transaction> | null> = this.refresh$.pipe(
-    tap(() => (this.loading = true)),
-    switchMap((event) =>
-      this.transactionService.getAll(this.buildFilters(event ?? undefined))
-    ),
-    tap((page) => {
-      this.pageSubject.next(page);
-      this.totalRecords = page.totalElements;
-      this.loading = false;
-    })
-  );
-
   ngOnInit(): void {
     this.loadCategories();
   }
 
   loadCategories(): void {
     this.categoryService.getAll().subscribe({
-      next: (data) => this.categoriesSubject.next(data),
+      next: (data) => this.categoriesState.set(data),
       error: (err) => console.error('Failed to load categories', err),
     });
   }
 
   loadTransactions(event?: TableLazyLoadEvent): void {
-    this.refresh$.next(event ?? null);
+    this.lazyLoadEvent.set(event);
   }
 
   private buildFilters(event?: TableLazyLoadEvent): TransactionFilters {
@@ -175,7 +187,7 @@ export class TransactionListComponent implements OnInit {
   }
 
   private reload(): void {
-    this.refresh$.next(null);
+    this.refreshTick.update((n) => n + 1);
   }
 
   openCreateDialog(): void {
@@ -210,9 +222,9 @@ export class TransactionListComponent implements OnInit {
   }
 
   deleteOptimistic(transaction: Transaction): void {
-    const snapshot = this.pageSubject.value;
+    const snapshot = this.page();
     if (snapshot) {
-      this.pageSubject.next({
+      this.page.set({
         ...snapshot,
         content: snapshot.content.filter((t) => t.id !== transaction.id),
       });
@@ -224,7 +236,7 @@ export class TransactionListComponent implements OnInit {
         this.reload();
       },
       error: (err) => {
-        if (snapshot) this.pageSubject.next(snapshot);
+        if (snapshot) this.page.set(snapshot);
         console.error('Failed to delete transaction', err);
       },
     });

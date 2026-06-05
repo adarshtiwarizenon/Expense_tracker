@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
@@ -45,17 +45,22 @@ import { DashboardService } from '../dashboard.service';
 export class DashboardHomeComponent {
   private dashboardService = inject(DashboardService);
 
-  loading = false;
+  // Tick signal — incrementing it triggers the resource to refetch.
+  private refreshTick = signal(0);
 
-  private refresh$ = new BehaviorSubject<void>(undefined);
-  summary$: Observable<DashboardSummary | null> = this.refresh$.pipe(
-    tap(() => (this.loading = true)),
-    switchMap(() => this.dashboardService.getSummary()),
-    tap(() => (this.loading = false))
-  );
+  // rxResource gives us value/isLoading/error signals derived from the HTTP call.
+  // The `params` function re-runs when refreshTick changes, which triggers a new request.
+  summaryResource = rxResource({
+    params: () => this.refreshTick(),
+    stream: () => this.dashboardService.getSummary(),
+  });
+
+  // Convenience signals so the template doesn't have to repeat resource accessors.
+  summary = computed<DashboardSummary | null>(() => this.summaryResource.value() ?? null);
+  loading = computed(() => this.summaryResource.isLoading());
 
   loadSummary(): void {
-    this.refresh$.next();
+    this.refreshTick.update((n) => n + 1);
   }
 
   getProgressColor(status: BudgetStatus): string {

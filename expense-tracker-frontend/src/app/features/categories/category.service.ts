@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, ReplaySubject, defer, map, shareReplay, tap } from 'rxjs';
+import { Observable, defer, map, shareReplay, tap } from 'rxjs';
 import { API_ENDPOINTS } from '../../core/constants/api-endpoints';
 import { ApiResponse } from '../../core/models/api-response.model';
 import { Category, CategoryRequest } from '../../core/models/category.model';
@@ -9,7 +9,6 @@ import { Category, CategoryRequest } from '../../core/models/category.model';
 export class CategoryService {
   private http = inject(HttpClient);
 
-  private invalidate$ = new ReplaySubject<void>(1);
   private cache$?: Observable<Category[]>;
 
   // Cached: subsequent calls reuse the last result until a mutation invalidates it.
@@ -59,6 +58,5 @@ export class CategoryService {
 
   private invalidateCache(): void {
     this.cache$ = undefined;
-    this.invalidate$.next();
   }
 }

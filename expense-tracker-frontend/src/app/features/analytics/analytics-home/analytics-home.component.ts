@@ -1,8 +1,9 @@
 
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
+import { tap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
@@ -48,9 +49,7 @@ import { PageToolbarComponent } from '../../../core/shared/components/page-toolb
 export class AnalyticsHomeComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
 
-  loading = false;
-
-  // Charts (built as side-effect when data arrives)
+  // Charts (built as side-effect when data arrives via tap in the stream)
   pieChartData: any;
   pieChartOptions: any;
   barChartData: any;
@@ -58,51 +57,72 @@ export class AnalyticsHomeComponent implements OnInit {
   lineChartData: any;
   lineChartOptions: any;
 
-  // Filters
+  // Filters — kept as plain fields so [(ngModel)] still works.
+  // Refetch is driven by per-resource tick signals below.
   selectedMonth: Date = new Date();
   trendDateRange: Date[] | null = null;
   trendMaxDate: Date | null = null;
 
-  private categoryRefresh$ = new BehaviorSubject<void>(undefined);
-  private comparisonRefresh$ = new BehaviorSubject<void>(undefined);
-  private trendRefresh$ = new BehaviorSubject<void>(undefined);
-  private metricsRefresh$ = new BehaviorSubject<void>(undefined);
-  private insightsRefresh$ = new BehaviorSubject<void>(undefined);
+  // Per-resource tick signals — incrementing one re-fires that resource's stream.
+  // Separate ticks let us refresh individual sections (e.g. only category on month change).
+  private categoryTick = signal(0);
+  private comparisonTick = signal(0);
+  private trendTick = signal(0);
+  private metricsTick = signal(0);
+  private insightsTick = signal(0);
 
-  categoryDistribution$: Observable<CategoryDistribution[]> = this.categoryRefresh$.pipe(
-    switchMap(() =>
-      this.analyticsService.getCategoryDistribution(DateUtil.toMonthString(this.selectedMonth))
-    ),
-    tap((data) => this.updatePieChart(data))
-  );
+  categoryResource = rxResource({
+    params: () => this.categoryTick(),
+    stream: () =>
+      this.analyticsService
+        .getCategoryDistribution(DateUtil.toMonthString(this.selectedMonth))
+        .pipe(tap((data) => this.updatePieChart(data))),
+  });
 
-  monthlyComparison$: Observable<MonthlyComparison[]> = this.comparisonRefresh$.pipe(
-    switchMap(() => this.analyticsService.getMonthlyComparison(6)),
-    tap((data) => this.updateBarChart(data))
-  );
+  comparisonResource = rxResource({
+    params: () => this.comparisonTick(),
+    stream: () =>
+      this.analyticsService
+        .getMonthlyComparison(6)
+        .pipe(tap((data) => this.updateBarChart(data))),
+  });
 
-  expenseTrend$: Observable<ExpenseTrend[]> = this.trendRefresh$.pipe(
-    switchMap(() => {
+  trendResource = rxResource({
+    params: () => this.trendTick(),
+    stream: () => {
       const start = this.trendDateRange?.[0]
         ? DateUtil.toLocalDateString(this.trendDateRange[0])
         : undefined;
       const end = this.trendDateRange?.[1]
         ? DateUtil.toLocalDateString(this.trendDateRange[1])
         : undefined;
-      return this.analyticsService.getExpenseTrend(start, end);
-    }),
-    tap((data) => this.updateLineChart(data))
-  );
+      return this.analyticsService
+        .getExpenseTrend(start, end)
+        .pipe(tap((data) => this.updateLineChart(data)));
+    },
+  });
 
-  metrics$: Observable<AnalyticsMetrics> = this.metricsRefresh$.pipe(
-    tap(() => (this.loading = true)),
-    switchMap(() => this.analyticsService.getMetrics()),
-    tap(() => (this.loading = false))
-  );
+  metricsResource = rxResource({
+    params: () => this.metricsTick(),
+    stream: () => this.analyticsService.getMetrics(),
+  });
 
-  insights$: Observable<Insight[]> = this.insightsRefresh$.pipe(
-    switchMap(() => this.analyticsService.getInsights())
+  insightsResource = rxResource({
+    params: () => this.insightsTick(),
+    stream: () => this.analyticsService.getInsights(),
+  });
+
+  // Convenience signals for the template.
+  categoryDistribution = computed<CategoryDistribution[]>(
+    () => this.categoryResource.value() ?? []
   );
+  monthlyComparison = computed<MonthlyComparison[]>(
+    () => this.comparisonResource.value() ?? []
+  );
+  expenseTrend = computed<ExpenseTrend[]>(() => this.trendResource.value() ?? []);
+  metrics = computed<AnalyticsMetrics | null>(() => this.metricsResource.value() ?? null);
+  insights = computed<Insight[]>(() => this.insightsResource.value() ?? []);
+  loading = computed(() => this.metricsResource.isLoading());
 
   ngOnInit(): void {
     this.initChartOptions();
@@ -146,11 +166,11 @@ export class AnalyticsHomeComponent implements OnInit {
   }
 
   loadAll(): void {
-    this.categoryRefresh$.next();
-    this.comparisonRefresh$.next();
-    this.trendRefresh$.next();
-    this.metricsRefresh$.next();
-    this.insightsRefresh$.next();
+    this.categoryTick.update((n) => n + 1);
+    this.comparisonTick.update((n) => n + 1);
+    this.trendTick.update((n) => n + 1);
+    this.metricsTick.update((n) => n + 1);
+    this.insightsTick.update((n) => n + 1);
   }
 
   private updatePieChart(data: CategoryDistribution[]): void {
@@ -201,11 +221,11 @@ export class AnalyticsHomeComponent implements OnInit {
   onTrendDateClear(): void {
     this.trendDateRange = null;
     this.trendMaxDate = null;
-    this.trendRefresh$.next();
+    this.trendTick.update((n) => n + 1);
   }
 
   onMonthChange(): void {
-    this.categoryRefresh$.next();
+    this.categoryTick.update((n) => n + 1);
   }
 
   onTrendDateChange(): void {
@@ -218,7 +238,7 @@ export class AnalyticsHomeComponent implements OnInit {
       this.trendMaxDate = max;
     } else if (start && end) {
       this.trendMaxDate = null;
-      this.trendRefresh$.next();
+      this.trendTick.update((n) => n + 1);
     }
   }
 

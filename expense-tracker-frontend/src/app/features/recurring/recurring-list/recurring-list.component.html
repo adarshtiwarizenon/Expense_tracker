@@ -18,7 +18,7 @@
 </app-page-toolbar>
 
 <p-panel header="Active Recurring Transactions" [toggleable]="true">
-  <ng-container *ngIf="recurring$ | async as recurringTransactions">
+  <ng-container *ngIf="recurring() as recurringTransactions">
   <p-table
     [value]="recurringTransactions"
     [loading]="loading"

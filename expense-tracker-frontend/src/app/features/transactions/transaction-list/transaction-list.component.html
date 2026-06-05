@@ -23,7 +23,7 @@
       <label class="block mb-2">Categories</label>
       <p-multiSelect
         [(ngModel)]="filterCategoryIds"
-        [options]="(categories$ | async) || []"
+        [options]="categories()"
         optionLabel="name"
         optionValue="id"
         placeholder="All categories"
@@ -62,16 +62,14 @@
 </p-panel>
 
 <!-- Table -->
-<!-- pageStream$ async binding keeps the refresh pipeline subscribed; data is read from page$ -->
-<ng-container *ngIf="{ stream: pageStream$ | async, page: page$ | async } as vm">
 <p-table
-  [value]="vm.page?.content || []"
+  [value]="page()?.content || []"
   [lazy]="true"
   (onLazyLoad)="loadTransactions($event)"
   [paginator]="true"
   [rows]="defaultPageSize"
-  [totalRecords]="totalRecords"
-  [loading]="loading"
+  [totalRecords]="totalRecords()"
+  [loading]="loading()"
   [rowsPerPageOptions]="pageSizeOptions"
   styleClass="p-datatable-sm"
   sortField="date"
@@ -140,12 +138,11 @@
     </tr>
   </ng-template>
 </p-table>
-</ng-container>
 
 <app-transaction-form
   [(visible)]="dialogVisible"
   [editingTransaction]="editingTransaction"
-  [categories]="(categories$ | async) || []"
+  [categories]="categories()"
   [serverError]="transactionServerError"
   (save)="onSave($event)"
 ></app-transaction-form>

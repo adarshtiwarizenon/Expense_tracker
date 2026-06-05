@@ -24,7 +24,7 @@
 
 <!-- UTILIZATION OVERVIEW -->
 <p-panel header="Budget Utilization" [toggleable]="true" styleClass="mb-3">
-  <ng-container *ngIf="utilization$ | async as utilization">
+  <ng-container *ngIf="utilization() as utilization">
     <div *ngIf="utilization.length === 0" class="text-center p-3">
       <p-message
         severity="info"
@@ -65,7 +65,7 @@
 <!-- ALL BUDGETS TABLE -->
 <p-panel header="All Budgets" [toggleable]="true">
   <p-table
-    [value]="(budgets$ | async) || []"
+    [value]="budgets()"
     [loading]="loading"
     [paginator]="true"
     [rows]="defaultPageSize"

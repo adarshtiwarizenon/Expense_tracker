@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
-import { BehaviorSubject } from 'rxjs';
 import { CurrencyInrPipe } from '../../../core/shared/pipes/currency-inr.pipe';
 import { SeverityPipe } from '../../../core/shared/pipes/severity.pipe';
 import { PageToolbarComponent } from '../../../core/shared/components/page-toolbar/page-toolbar.component';
@@ -51,8 +50,8 @@ export class RecurringListComponent implements OnInit {
   private notification = inject(NotificationService);
   private confirmation = inject(ConfirmationService);
 
-  private recurringSubject = new BehaviorSubject<RecurringTransaction[]>([]);
-  recurring$ = this.recurringSubject.asObservable();
+  private recurringState = signal<RecurringTransaction[]>([]);
+  recurring = this.recurringState.asReadonly();
 
   categories: Category[] = [];
   loading = false;
@@ -81,7 +80,7 @@ export class RecurringListComponent implements OnInit {
     this.loading = true;
     this.recurringService.getAll().subscribe({
       next: (data) => {
-        this.recurringSubject.next(data);
+        this.recurringState.set(data);
         this.loading = false;
       },
       error: (err) => {
@@ -125,13 +124,13 @@ export class RecurringListComponent implements OnInit {
   }
 
   deleteOptimistic(recurring: RecurringTransaction): void {
-    const snapshot = this.recurringSubject.value;
-    this.recurringSubject.next(snapshot.filter((r) => r.id !== recurring.id));
+    const snapshot = this.recurringState();
+    this.recurringState.set(snapshot.filter((r) => r.id !== recurring.id));
 
     this.recurringService.delete(recurring.id).subscribe({
       next: () => this.notification.success('Recurring transaction deleted'),
       error: (err) => {
-        this.recurringSubject.next(snapshot);
+        this.recurringState.set(snapshot);
         console.error('Failed to delete recurring transaction', err);
       },
     });

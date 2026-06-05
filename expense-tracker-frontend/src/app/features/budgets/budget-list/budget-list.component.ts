@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePicker } from 'primeng/datepicker';
@@ -10,7 +10,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
-import { BehaviorSubject, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { CurrencyInrPipe } from '../../../core/shared/pipes/currency-inr.pipe';
 import { SeverityPipe } from '../../../core/shared/pipes/severity.pipe';
 import { PageToolbarComponent } from '../../../core/shared/components/page-toolbar/page-toolbar.component';
@@ -57,10 +57,10 @@ export class BudgetListComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private notification = inject(NotificationService);
 
-  private budgetsSubject = new BehaviorSubject<Budget[]>([]);
-  private utilizationSubject = new BehaviorSubject<BudgetUtilization[]>([]);
-  budgets$ = this.budgetsSubject.asObservable();
-  utilization$ = this.utilizationSubject.asObservable();
+  private budgetsState = signal<Budget[]>([]);
+  private utilizationState = signal<BudgetUtilization[]>([]);
+  budgets = this.budgetsState.asReadonly();
+  utilization = this.utilizationState.asReadonly();
 
   categories: Category[] = [];
   loading = false;
@@ -95,8 +95,8 @@ export class BudgetListComponent implements OnInit {
       utilization: this.budgetService.getUtilization(monthStr),
     }).subscribe({
       next: ({ budgets, utilization }) => {
-        this.budgetsSubject.next(budgets);
-        this.utilizationSubject.next(utilization);
+        this.budgetsState.set(budgets);
+        this.utilizationState.set(utilization);
         this.loading = false;
       },
       error: (err) => {
@@ -140,8 +140,8 @@ export class BudgetListComponent implements OnInit {
   }
 
   deleteOptimistic(budget: Budget): void {
-    const snapshot = this.budgetsSubject.value;
-    this.budgetsSubject.next(snapshot.filter((b) => b.id !== budget.id));
+    const snapshot = this.budgetsState();
+    this.budgetsState.set(snapshot.filter((b) => b.id !== budget.id));
 
     this.budgetService.delete(budget.id).subscribe({
       next: () => {
@@ -149,7 +149,7 @@ export class BudgetListComponent implements OnInit {
         this.loadData();
       },
       error: (err) => {
-        this.budgetsSubject.next(snapshot);
+        this.budgetsState.set(snapshot);
         console.error('Failed to delete budget', err);
       },
     });

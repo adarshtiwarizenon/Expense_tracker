@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
 import { ApiResponse } from '../models/api-response.model';
 import { AuthResponse, CurrentUser, LoginRequest, RegisterRequest } from '../models/auth.model';
@@ -15,12 +15,12 @@ export class AuthService {
   private tokenService = inject(TokenService);
   private router = inject(Router);
 
-  // BehaviorSubject holds the current user in memory.
-  // Initialized from localStorage so the user stays logged in after a page refresh.
-  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(this.tokenService.getUser());
+  // Writable signal holding the current user. Initialized from localStorage
+  // so the user stays logged in after a page refresh.
+  private currentUserState = signal<CurrentUser | null>(this.tokenService.getUser());
 
-  // Public read-only observable — components (e.g. navbar) subscribe to this to react when the user logs in/out
-  currentUser$ = this.currentUserSubject.asObservable();
+  // Public read-only signal — components call currentUser() to read, cannot mutate.
+  currentUser = this.currentUserState.asReadonly();
 
   // POST /api/auth/register — creates account, then calls handleAuthSuccess to store token
   register(request: RegisterRequest): Observable<ApiResponse<AuthResponse>> {
@@ -39,7 +39,7 @@ export class AuthService {
   // Clears localStorage, resets in-memory user state, and redirects to login page
   logout(): void {
     this.tokenService.clear();
-    this.currentUserSubject.next(null);
+    this.currentUserState.set(null);
     this.router.navigate(['/auth/login']);
   }
 
@@ -49,7 +49,7 @@ export class AuthService {
   }
 
   // Called after both login and register succeed — stores token + user in localStorage
-  // and pushes the new user into the BehaviorSubject so all subscribers update immediately
+  // and updates the current user signal so all subscribers update immediately
   private handleAuthSuccess(authData: AuthResponse): void {
     this.tokenService.saveToken(authData.token);
     const user: CurrentUser = {
@@ -58,6 +58,6 @@ export class AuthService {
       fullName: authData.fullName,
     };
     this.tokenService.saveUser(user);
-    this.currentUserSubject.next(user);
+    this.currentUserState.set(user);
   }
 }

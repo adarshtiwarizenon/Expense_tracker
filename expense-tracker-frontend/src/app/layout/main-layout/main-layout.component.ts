@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { Observable, filter, map, startWith } from 'rxjs';
+import { filter, map, startWith } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -43,13 +44,17 @@ export class MainLayoutComponent implements OnInit {
   sidebarVisible = true;
   isDarkMode = false;
 
-  currentUser$ = this.authService.currentUser$;
-  loading$ = this.loadingService.loading$;
+  currentUser = this.authService.currentUser;
+  loading = this.loadingService.loading;
 
-  breadcrumbItems$: Observable<MenuItem[]> = this.router.events.pipe(
-    filter((event) => event instanceof NavigationEnd),
-    startWith(null),
-    map(() => this.computeBreadcrumb(this.router.url))
+  // toSignal converts the router event stream into a signal — same data, signal API.
+  breadcrumbItems = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.computeBreadcrumb(this.router.url))
+    ),
+    { initialValue: [] as MenuItem[] } // Provide an initial value so the template can read it immediately.
   );
 
   ngOnInit(): void {

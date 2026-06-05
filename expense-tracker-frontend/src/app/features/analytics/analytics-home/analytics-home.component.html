@@ -9,11 +9,11 @@
 </app-page-toolbar>
 
 <!-- METRICS CARDS -->
-<ng-container *ngIf="{ metrics: metrics$ | async } as m">
+<ng-container *ngIf="{ metrics: metrics(), loading: loading() } as m">
 <div class="grid mb-4">
   <div class="col-12 md:col-6 lg:col-3">
     <p-card styleClass="metric-card">
-      <ng-container *ngIf="loading; else metricSavings">
+      <ng-container *ngIf="m.loading; else metricSavings">
         <p-skeleton height="60px"></p-skeleton>
       </ng-container>
       <ng-template #metricSavings>
@@ -27,7 +27,7 @@
 
   <div class="col-12 md:col-6 lg:col-3">
     <p-card styleClass="metric-card">
-      <ng-container *ngIf="loading; else metricTop">
+      <ng-container *ngIf="m.loading; else metricTop">
         <p-skeleton height="60px"></p-skeleton>
       </ng-container>
       <ng-template #metricTop>
@@ -42,7 +42,7 @@
 
   <div class="col-12 md:col-6 lg:col-3">
     <p-card styleClass="metric-card">
-      <ng-container *ngIf="loading; else metricCurrent">
+      <ng-container *ngIf="m.loading; else metricCurrent">
         <p-skeleton height="60px"></p-skeleton>
       </ng-container>
       <ng-template #metricCurrent>
@@ -56,7 +56,7 @@
 
   <div class="col-12 md:col-6 lg:col-3">
     <p-card styleClass="metric-card">
-      <ng-container *ngIf="loading; else metricMom">
+      <ng-container *ngIf="m.loading; else metricMom">
         <p-skeleton height="60px"></p-skeleton>
       </ng-container>
       <ng-template #metricMom>
@@ -89,7 +89,7 @@
         ></p-datepicker>
       </div>
 
-      <ng-container *ngIf="categoryDistribution$ | async as categoryDistribution">
+      <ng-container *ngIf="categoryDistribution() as categoryDistribution">
         <div *ngIf="categoryDistribution.length === 0" class="text-center p-3">
           <p-message
             severity="info"
@@ -112,7 +112,7 @@
   <!-- BAR CHART: Monthly Comparison -->
   <div class="col-12 lg:col-6">
     <p-panel header="Monthly Comparison (Last 6 Months)" [toggleable]="true">
-      <ng-container *ngIf="monthlyComparison$ | async as monthlyComparison">
+      <ng-container *ngIf="monthlyComparison() as monthlyComparison">
         <div *ngIf="monthlyComparison.length === 0" class="text-center p-3">
           <p-message
             severity="info"
@@ -151,7 +151,7 @@
         ></p-datepicker>
       </div>
 
-      <ng-container *ngIf="expenseTrend$ | async as expenseTrend">
+      <ng-container *ngIf="expenseTrend() as expenseTrend">
         <div *ngIf="expenseTrend.length === 0" class="text-center p-3">
           <p-message
             severity="info"
@@ -174,7 +174,7 @@
   <!-- INSIGHTS PANEL -->
   <div class="col-12 lg:col-5">
     <p-panel header=" Smart Insights" [toggleable]="true">
-      <ng-container *ngIf="insights$ | async as insights">
+      <ng-container *ngIf="insights() as insights">
         <div *ngIf="insights.length === 0" class="text-center p-3">
           <p-message
             severity="info"

@@ -9,7 +9,7 @@
   ></p-button>
 </app-page-toolbar>
 
-<ng-container *ngIf="{ summary: summary$ | async } as vm">
+<ng-container *ngIf="{ summary: summary(), loading: loading() } as vm">
 <div class="dashboard-container">
   <!-- SUMMARY CARDS -->
   <div class="grid mb-4">
@@ -19,7 +19,7 @@
         icon="pi pi-arrow-down"
         variant="income"
         [value]="vm.summary?.totalIncome"
-        [loading]="loading"
+        [loading]="vm.loading"
       />
     </div>
 
@@ -29,7 +29,7 @@
         icon="pi pi-arrow-up"
         variant="expense"
         [value]="vm.summary?.totalExpenses"
-        [loading]="loading"
+        [loading]="vm.loading"
       />
     </div>
 
@@ -39,7 +39,7 @@
         icon="pi pi-wallet"
         variant="balance"
         [value]="vm.summary?.currentBalance"
-        [loading]="loading"
+        [loading]="vm.loading"
       />
     </div>
 
@@ -49,7 +49,7 @@
         icon="pi pi-chart-line"
         variant="savings"
         [value]="vm.summary?.monthlySavings"
-        [loading]="loading"
+        [loading]="vm.loading"
       />
     </div>
   </div>
@@ -69,7 +69,7 @@
 
         <p-table
           [value]="vm.summary?.recentTransactions || []"
-          [loading]="loading"
+          [loading]="vm.loading"
           styleClass="p-datatable-sm"
           dataKey="id"
         >
@@ -121,12 +121,12 @@
           </div>
         </ng-template>
 
-        <div *ngIf="loading">
+        <div *ngIf="vm.loading">
           <p-skeleton height="60px" styleClass="mb-2"></p-skeleton>
           <p-skeleton height="60px" styleClass="mb-2"></p-skeleton>
         </div>
 
-        <div *ngIf="!loading">
+        <div *ngIf="!vm.loading">
           <div
             *ngIf="(vm.summary?.budgetAlerts?.length ?? 0) === 0"
             class="text-center p-3"

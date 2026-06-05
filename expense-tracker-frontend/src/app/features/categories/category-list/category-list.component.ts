@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { noWhitespace } from '../../../core/validators/custom-validators';
 import { ConfirmationService, MenuItem } from 'primeng/api';
-import { BehaviorSubject, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
@@ -56,8 +56,8 @@ export class CategoryListComponent implements OnInit {
   private notification = inject(NotificationService);
   private confirmation = inject(ConfirmationService);
 
-  private categoriesSubject = new BehaviorSubject<Category[]>([]);
-  categories$ = this.categoriesSubject.asObservable();
+  private categoriesState = signal<Category[]>([]);
+  categories = this.categoriesState.asReadonly();
 
   selectedCategories: Category[] = [];
   loading = false;
@@ -100,7 +100,7 @@ export class CategoryListComponent implements OnInit {
     this.loading = true;
     this.categoryService.getAll().subscribe({
       next: (data) => {
-        this.categoriesSubject.next(data);
+        this.categoriesState.set(data);
         this.loading = false;
       },
       error: (err) => {
@@ -149,13 +149,13 @@ export class CategoryListComponent implements OnInit {
   }
 
   deleteOptimistic(category: Category): void {
-    const snapshot = this.categoriesSubject.value;
-    this.categoriesSubject.next(snapshot.filter((c) => c.id !== category.id));
+    const snapshot = this.categoriesState();
+    this.categoriesState.set(snapshot.filter((c) => c.id !== category.id));
 
     this.categoryService.delete(category.id).subscribe({
       next: () => this.notification.success('Category deleted'),
       error: (err) => {
-        this.categoriesSubject.next(snapshot);
+        this.categoriesState.set(snapshot);
         console.error('Failed to delete category', err);
       },
     });

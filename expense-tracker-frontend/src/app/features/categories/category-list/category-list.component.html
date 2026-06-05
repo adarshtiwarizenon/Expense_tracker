@@ -9,7 +9,7 @@
 
 <p-panel header="Manage your categories" [toggleable]="true">
   <p-table
-    [value]="(categories$ | async) || []"
+    [value]="categories()"
     [(selection)]="selectedCategories"
     [loading]="loading"
     [paginator]="true"

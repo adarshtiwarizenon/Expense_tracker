@@ -1,11 +1,12 @@
 <div class="layout-wrapper">
   <!-- GLOBAL LOADING BAR -->
-  <p-progressBar
-    *ngIf="loading$ | async"
-    mode="indeterminate"
-    [style]="{ height: '3px' }"
-    styleClass="global-progress-bar"
-  ></p-progressBar>
+  @if (loading()) {
+    <p-progressBar
+      mode="indeterminate"
+      [style]="{ height: '3px' }"
+      styleClass="global-progress-bar"
+    ></p-progressBar>
+  }
 
   <!-- TOPBAR -->
   <div class="topbar">
@@ -46,22 +47,22 @@
         tooltipPosition="bottom"
         styleClass="cursor-pointer"
       ></p-avatar>
-      <span class="user-name" *ngIf="currentUser$ | async as currentUser">
-        {{ currentUser.fullName }}
-      </span>
+      @if (currentUser(); as user) {
+        <span class="user-name">{{ user.fullName }}</span>
+      }
     </div>
   </div>
   </div>
 
   <!-- BREADCRUMB -->
-  <ng-container *ngIf="breadcrumbItems$ | async as breadcrumbItems">
-    <div class="breadcrumb-bar" *ngIf="breadcrumbItems.length > 0">
+  @if (breadcrumbItems().length > 0) {
+    <div class="breadcrumb-bar">
       <p-breadcrumb
-        [model]="breadcrumbItems"
+        [model]="breadcrumbItems()"
         [home]="homeBreadcrumb"
       ></p-breadcrumb>
     </div>
-  </ng-container>
+  }
 
   <div class="layout-content">
     <!-- SIDEBAR -->

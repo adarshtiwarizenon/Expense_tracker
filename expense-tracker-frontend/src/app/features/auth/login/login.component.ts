@@ -34,17 +34,15 @@ export class LoginComponent {
   private router = inject(Router);
   private notification = inject(NotificationService);
 
-  loading = false;   // disables the submit button and shows spinner while request is in-flight
-  serverError = '';  // shown as a red message banner above the form when the backend rejects login
+  loading = false;
+  serverError = '';
 
-  // Reactive form with client-side validation — email format + password min length
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   onSubmit(): void {
-    // markAllAsTouched triggers validation messages to appear on all fields even if the user never focused them
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -55,12 +53,11 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm.value as any).subscribe({
       next: () => {
-        // AuthService.handleAuthSuccess already saved the token — just notify and redirect
         this.notification.success('Welcome back!');
         this.router.navigate(['/transactions']);
       },
       error: (err) => {
-        // errorInterceptor shows a global toast, but we also show inline error for wrong credentials
+        // Inline message in addition to the global toast from errorInterceptor.
         this.serverError = err.error?.message || 'Login failed. Please try again.';
         this.loading = false;
       },
@@ -68,7 +65,6 @@ export class LoginComponent {
     });
   }
 
-  // Helper used in the template to show red validation text under a field
   isInvalid(field: string): boolean {
     const control = this.loginForm.get(field);
     return !!(control && control.invalid && control.touched);

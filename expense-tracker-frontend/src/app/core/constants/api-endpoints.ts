@@ -1,7 +1,6 @@
 import { environment } from '../../../environments/environment';
 
 // Base URL comes from environment.ts (e.g. http://localhost:8080/api)
-// All endpoints are defined here so changing the base URL or path is a single-place edit
 const BASE = environment.apiUrl;
 
 export const API_ENDPOINTS = {

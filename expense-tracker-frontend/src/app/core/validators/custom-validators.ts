@@ -1,7 +1,5 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
-// Rejects dates after today — used on transaction date field.
-// The datepicker already enforces [maxDate] in the UI; this is a form-level safety net.
 export function noFutureDate(control: AbstractControl): ValidationErrors | null {
   const val: Date = control.value;
   if (!val) return null;
@@ -10,8 +8,6 @@ export function noFutureDate(control: AbstractControl): ValidationErrors | null 
   return val > endOfToday ? { futureDate: true } : null;
 }
 
-// Requires at least one uppercase letter, one digit, and one special character.
-// Runs only when the field has a value — minLength handles the empty case.
 export function strongPassword(control: AbstractControl): ValidationErrors | null {
   const v: string = control.value || '';
   if (!v) return null;
@@ -21,16 +17,14 @@ export function strongPassword(control: AbstractControl): ValidationErrors | nul
   return hasUpper && hasDigit && hasSpecial ? null : { weakPassword: true };
 }
 
-// Rejects strings that are non-empty but contain only whitespace (e.g. "   ").
-// Validators.required passes for "   " because it is truthy — this closes that gap.
+// Validators.required passes for "   " because it's truthy — this closes that gap.
 export function noWhitespace(control: AbstractControl): ValidationErrors | null {
   const val: string = control.value || '';
-  return val.length > 0 && val.trim().length === 0 ? 
+  return val.length > 0 && val.trim().length === 0 ?
   { whitespace: true } : null;
 }
 
-// Group-level validator — compares password and confirmPassword sibling controls.
-// Must be applied at the FormGroup level, not on an individual control.
+// Group-level — apply on the FormGroup, not a single control.
 export function passwordMatch(group: AbstractControl): ValidationErrors | null {
   const password = group.get('password')?.value;
   const confirm = group.get('confirmPassword')?.value;

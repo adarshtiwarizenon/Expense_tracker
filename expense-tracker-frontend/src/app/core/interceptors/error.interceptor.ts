@@ -5,8 +5,7 @@ import { catchError, throwError } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 import { TokenService } from '../services/token.service';
 
-// Global HTTP error handler — runs after every failed HTTP response.
-// Centralizes error handling so components don't each need their own error toast logic.
+// Global HTTP error handler — toasts errors and force-logout on 401.
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
   const tokenService = inject(TokenService);
@@ -14,30 +13,26 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Default fallback message if backend sends no readable error
       let message = 'An unexpected error occurred';
 
-      // Try to use the backend's error message first
       if (error.error?.message) {
         message = error.error.message;
       } else if (error.error?.errors?.length > 0) {
-        // Validation errors array (e.g. from @Valid on DTOs) — join into one string
         message = error.error.errors.join(', ');
       }
 
       if (error.status === 401) {
-        // Token expired or invalid — clear storage and force re-login
         tokenService.clear();
         router.navigate(['/auth/login']);
         notificationService.error('Session expired. Please login again.');
       } else if (error.status === 0) {
-        // status 0 means the request never reached the server (network down, CORS blocked, backend offline)
+        // Request never reached server (network/CORS/backend down).
         notificationService.error('Cannot connect to server');
       } else {
         notificationService.error(message);
       }
 
-      // Re-throw so individual component error handlers can still react if needed
+      // Re-throw so component handlers can react too.
       return throwError(() => error);
     })
   );

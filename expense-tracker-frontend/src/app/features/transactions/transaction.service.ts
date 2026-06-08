@@ -40,7 +40,7 @@ export class TransactionService {
 
   // Get single transaction by ID
 
-  getById(id: number): Observable<Transaction> {
+  getById(id: number): Observable<Transaction> { //observable that will emit a transaction object
     return this.http
       .get<ApiResponse<Transaction>>(API_ENDPOINTS.TRANSACTIONS.BY_ID(id))
       .pipe(map((res) => res.data));
